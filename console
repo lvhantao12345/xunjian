@@ -1,37 +1,38 @@
 import xunjian
 from time import sleep
 
+RuiJie_Device_1 = xunjian.RuiJie_Device("192.168.100.112", "23", "netcenter", "xh**.dnet")
+RuiJie_Device_1.connect_device_by_telnet_with_username()
+RuiJie_Device_1.get_raw_config_by_telnet()
+RuiJie_Device_1.close_telnet_session()
+sleep(0.3)
+
 H3C_Device_1 = xunjian.H3C_Device("192.100.0.8", "23", "netcenter", "xh**.dnet")
 H3C_Device_1.connect_device_by_telnet_with_username()
 H3C_Device_1.get_raw_config_by_telnet()
-# H3C_Device_1.get_hostname_by_telnet()
 H3C_Device_1.close_telnet_session()
 sleep(0.3)
 
 H3C_Device_1 = xunjian.H3C_Device("192.168.100.251", "23", "netcenter", "xh**.dnet")
 H3C_Device_1.connect_device_by_telnet_without_username()
 H3C_Device_1.get_raw_config_by_telnet()
-# H3C_Device_1.get_hostname_by_telnet()
 H3C_Device_1.close_telnet_session()
 sleep(0.3)
 
 H3C_Device_1 = xunjian.H3C_Device("192.168.100.105", "23", "netcenter", "xh**.dnet")
 H3C_Device_1.connect_device_by_telnet_with_username()
 H3C_Device_1.get_raw_config_by_telnet()
-# H3C_Device_1.get_hostname_by_telnet()
 H3C_Device_1.close_telnet_session()
 sleep(0.3)
 
 H3C_Device_1 = xunjian.H3C_Device("192.100.0.9", "23", "netcenter", "xh**.dnet")
 H3C_Device_1.connect_device_by_telnet_with_username()
 H3C_Device_1.get_raw_config_by_telnet()
-# H3C_Device_1.get_hostname_by_telnet()
 H3C_Device_1.close_telnet_session()
 sleep(0.3)
 
 H3C_Device_1 = xunjian.H3C_Device("192.100.0.10", "23", "netcenter", "xh**.dnet")
 H3C_Device_1.connect_device_by_telnet_with_username()
 H3C_Device_1.get_raw_config_by_telnet()
-# H3C_Device_1.get_hostname_by_telnet()
 H3C_Device_1.close_telnet_session()
 sleep(0.3)
