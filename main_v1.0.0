@@ -1,0 +1,179 @@
+import paramiko
+import telnetlib
+import re
+import xlrd
+from time import sleep
+
+
+class H3C_Device:
+    def __init__(self,IP,port,username,password):
+        self.IP = IP
+        self.port = port
+        self.username = username
+        self.password = password
+        self.file_name = ""
+
+    def connect_device_by_ssh(self):
+        try:
+            self.ssh_client = paramiko.SSHClient()
+            self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.ssh_client.connect(self.IP, self.port, self.username,self.password)
+            self.std_in, self.std_out, self.std_err = self.ssh_client.exec_command("display current-configuration")
+        except:
+            print("网络连接失败！")
+
+    def connect_device_by_telnet_without_username(self):
+        try:
+            self.session = telnetlib.Telnet(self.IP,port=self.port)
+            self.session.read_until(b'Password:',timeout=1)
+            #必须以二进制形式输入字符
+            self.session.write(self.password.encode('ascii') + b'\n')
+        except:
+            print("telnet_without_username连接失败！")
+
+    def connect_device_by_telnet_with_username(self):
+        try:
+            self.session = telnetlib.Telnet(self.IP,port=self.port)
+            self.session.read_until(b"login:",timeout=2)
+            self.session.write(self.username.encode('ascii') + b'\n')
+            self.session.read_until(b"Password:",timeout=2)
+            self.session.write(self.password.encode('ascii') + b'\n')
+        except:
+            print("telnet_with_username连接失败！")
+
+    def get_raw_config_by_telnet(self):
+        print("------开始获取设备名称-----")
+        hosname = self.get_hostname_by_telnet()
+        if hosname:
+            print("------成功获取设备名称-----")
+        else:
+            print("------获取设备名称失败-----")
+        file_name = 'E:/phython/config_backup/' + hosname + '_' + self.IP+ '.txt'
+        #先以设备名创建一个配置文件
+        print("------开始创建空配置文件-----")
+        with open(file_name, 'w+') as create_config_file:
+            create_config_file.truncate()
+        #使用r+模式无法自动创建不存在的文件
+        print("------空配置文件创建完成-----")
+        with open(file_name, "r+") as config:
+            config.truncate()
+            sleep(0.1)
+            print("------开始执行display cu命令-----")
+            self.session.write(b'display cu\n')
+            sleep(0.5)
+            try:
+                #如果配置里有特殊字符无法处理，则decode的时候加入'ignore'参数可忽略，并使用gb18030编码范围更广
+                self.output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '')
+                config.write(self.output)
+                moreflag = re.search("---- More ----", self.output)
+                #循环检测剩下的结果里是否包含“More”关键字，如果有则没显示完，循环输入空格
+                while (moreflag):
+                    self.session.write(b" ")
+                    sleep(0.5)
+                    self.output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '')
+                    # 去除\r后才能正常显示结果
+                    config.write(self.output,)
+                    moreflag = re.search("---- More ----" , self.output)
+                print("------display cu命令执行完成-----\n")
+            except:
+               print('------！！！display cu命令执行失败！！！-----\n')
+
+    def get_hostname_by_telnet(self):
+        sleep(0.5)
+        output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '').replace('<', '').replace('>', '').lstrip().rstrip()
+        pattern = '.+'
+        matcher = re.compile(pattern)
+        hostname = re.search(matcher, output).group(0)
+        print(hostname)
+        return hostname
+
+    def close_telnet_session(self):
+        self.session.close()
+
+
+class RuiJie_Device():
+    def __init__(self,IP,port,username,password):
+        self.IP = IP
+        self.port = port
+        self.username = username
+        self.password = password
+        self.file_name = ""
+
+    def connect_device_by_ssh(self):
+        try:
+            self.ssh_client = paramiko.SSHClient()
+            self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.ssh_client.connect(self.IP, self.port, self.username,self.password)
+            self.std_in, self.std_out, self.std_err = self.ssh_client.exec_command("display current-configuration")
+        except:
+            print("网络连接失败！")
+
+    def connect_device_by_telnet_without_username(self):
+        try:
+            self.session = telnetlib.Telnet(self.IP,port=self.port)
+            self.session.read_until(b'Password:',timeout=1)
+            #必须以二进制形式输入字符
+            self.session.write(self.password.encode('ascii') + b'\n')
+        except:
+            print("telnet_without_username连接失败！")
+
+    def connect_device_by_telnet_with_username(self):
+        try:
+            self.session = telnetlib.Telnet(self.IP,port=self.port)
+            self.session.read_until(b"login:",timeout=2)
+            self.session.write(self.username.encode('ascii') + b'\n')
+            self.session.read_until(b"Password:",timeout=2)
+            self.session.write(self.password.encode('ascii') + b'\n')
+            sleep(0.1)
+            self.session.write(b'enable\n')
+        except:
+            print("telnet_with_username连接失败！")
+
+    def get_raw_config_by_telnet(self):
+        print("------开始获取设备名称-----")
+        hosname = self.get_hostname_by_telnet()
+        if hosname:
+            print("------成功获取设备名称-----")
+        else:
+            print("------获取设备名称失败-----")
+        file_name = 'E:/phython/config_backup/' + hosname + '_' + self.IP+ '.txt'
+        #先以设备名创建一个配置文件
+        print("------开始创建空配置文件-----")
+        with open(file_name, 'w+') as create_config_file:
+            create_config_file.truncate()
+        #使用r+模式无法自动创建不存在的文件
+        print("------空配置文件创建完成-----")
+        with open(file_name, "r+") as config:
+            config.truncate()
+            sleep(0.1)
+            print("------开始执行show run命令-----")
+            self.session.write(b'show run\n')
+            sleep(0.5)
+            try:
+                #如果配置里有特殊字符无法处理，则decode的时候加入'ignore'参数可忽略，并使用gb18030编码范围更广
+                self.output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '')
+                config.write(self.output)
+                moreflag = re.search("--More--", self.output)
+                #循环检测剩下的结果里是否包含“More”关键字，如果有则没显示完，循环输入空格
+                while (moreflag):
+                    self.session.write(b" ")
+                    sleep(0.5)
+                    self.output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '')
+                    # 去除\r后才能正常显示结果
+                    config.write(self.output,)
+                    moreflag = re.search("--More--" , self.output)
+                print("------show run命令执行完成-----\n")
+            except:
+               print('------！！！show run命令执行失败！！！-----\n')
+
+    def get_hostname_by_telnet(self):
+        sleep(0.5)
+        output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '').replace('<', '').replace('>', '').lstrip().rstrip()
+        pattern = '.+'
+        matcher = re.compile(pattern)
+        hostname = re.search(matcher, output).group(0)
+        print(hostname)
+        return hostname
+
+    def close_telnet_session(self):
+        self.session.close()
