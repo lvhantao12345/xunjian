@@ -1,0 +1,41 @@
+"""
+本模块的作用是开始执行巡检任务
+"""
+import xunjian
+import device_list
+
+
+def start_xunjian_progress():
+    """
+    开始巡检任务
+    :return:
+    """
+    for index in range(len(device_list.get_vendor_list())):
+        if device_list.get_vendor_list()[index] == 'RuiJie':
+            device_index = xunjian.RuiJie_Device(str(device_list.get_ip_list()[index]),
+                                                 int(device_list.get_login_port_list()[index]),
+                                                 str(device_list.get_username_list()[index]),
+                                                 str(device_list.get_password_list()[index]))
+            if device_list.get_username_list():
+                device_index.connect_device_by_telnet_with_username()
+                device_index.get_raw_config_by_telnet()
+                device_index.close_telnet_session()
+            else:
+                device_index.connect_device_by_telnet_without_username()
+                device_index.get_raw_config_by_telnet()
+                device_index.close_telnet_session()
+        elif device_list.get_vendor_list()[index] == 'H3C':
+            device_index = xunjian.H3C_Device(str(device_list.get_ip_list()[index]),
+                                              int(device_list.get_login_port_list()[index]),
+                                              str(device_list.get_username_list()[index]),
+                                              str(device_list.get_password_list()[index]))
+            if device_list.get_username_list()[index]:
+                device_index.connect_device_by_telnet_with_username()
+                device_index.get_raw_config_by_telnet()
+                device_index.close_telnet_session()
+            else:
+                device_index.connect_device_by_telnet_without_username()
+                device_index.get_raw_config_by_telnet()
+                device_index.close_telnet_session()
+
+start_xunjian_progress()
