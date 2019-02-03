@@ -1,7 +1,11 @@
+"""
+本模块的作用是基于不同厂商，来定义不同的设备类型，并定义相应的功能方法。
+如获取配置，获取设备名称等
+"""
+
 import paramiko
 import telnetlib
 import re
-import xlrd
 from time import sleep
 
 
@@ -21,6 +25,7 @@ class H3C_Device:
             self.std_in, self.std_out, self.std_err = self.ssh_client.exec_command("display current-configuration")
         except:
             print("网络连接失败！")
+            pass
 
     def connect_device_by_telnet_without_username(self):
         try:
@@ -55,28 +60,29 @@ class H3C_Device:
             create_config_file.truncate()
         #使用r+模式无法自动创建不存在的文件
         print("------空配置文件创建完成-----")
-        with open(file_name, "r+") as config:
+        with open(file_name, "r+",encoding='utf-8') as config:
             config.truncate()
             sleep(0.1)
             print("------开始执行display cu命令-----")
             self.session.write(b'display cu\n')
-            sleep(0.5)
+            sleep(3)
             try:
-                #如果配置里有特殊字符无法处理，则decode的时候加入'ignore'参数可忽略，并使用gb18030编码范围更广
+                #如果配置里有特殊字符无法处理，则decode的时候加入'ignore'参数可忽略，使用gb18030编码范围更广
                 self.output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '')
                 config.write(self.output)
                 moreflag = re.search("---- More ----", self.output)
                 #循环检测剩下的结果里是否包含“More”关键字，如果有则没显示完，循环输入空格
                 while (moreflag):
                     self.session.write(b" ")
-                    sleep(0.5)
+                    sleep(0.6)
                     self.output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '')
                     # 去除\r后才能正常显示结果
-                    config.write(self.output,)
+                    config.write(self.output)
                     moreflag = re.search("---- More ----" , self.output)
                 print("------display cu命令执行完成-----\n")
             except:
-               print('------！！！display cu命令执行失败！！！-----\n')
+                print('------！！！display cu命令执行失败！！！-----\n')
+                pass
 
     def get_hostname_by_telnet(self):
         sleep(0.5)
@@ -100,6 +106,10 @@ class RuiJie_Device():
         self.file_name = ""
 
     def connect_device_by_ssh(self):
+        """
+        通过SSH方式进行登录
+        :return:
+        """
         try:
             self.ssh_client = paramiko.SSHClient()
             self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -107,8 +117,14 @@ class RuiJie_Device():
             self.std_in, self.std_out, self.std_err = self.ssh_client.exec_command("display current-configuration")
         except:
             print("网络连接失败！")
+            pass
 
     def connect_device_by_telnet_without_username(self):
+        """
+        仅通过密码方式使用telnet进行登录
+        :return:
+        """
+        print("------开始连接设备-----")
         try:
             self.session = telnetlib.Telnet(self.IP,port=self.port)
             self.session.read_until(b'Password:',timeout=1)
@@ -116,8 +132,15 @@ class RuiJie_Device():
             self.session.write(self.password.encode('ascii') + b'\n')
         except:
             print("telnet_without_username连接失败！")
+            pass
+        print("------设备连接完成-----")
 
     def connect_device_by_telnet_with_username(self):
+        """
+        通过用户名及密码方式使用telnet进行登录
+        :return:
+        """
+        print("------开始连接设备-----")
         try:
             self.session = telnetlib.Telnet(self.IP,port=self.port)
             self.session.read_until(b"login:",timeout=2)
@@ -128,8 +151,14 @@ class RuiJie_Device():
             self.session.write(b'enable\n')
         except:
             print("telnet_with_username连接失败！")
+            pass
+        print("------设备连接完成-----")
 
     def get_raw_config_by_telnet(self):
+        """
+        通过telnet方式获取设备的所有配置，
+        :return:
+        """
         print("------开始获取设备名称-----")
         hosname = self.get_hostname_by_telnet()
         if hosname:
@@ -143,7 +172,7 @@ class RuiJie_Device():
             create_config_file.truncate()
         #使用r+模式无法自动创建不存在的文件
         print("------空配置文件创建完成-----")
-        with open(file_name, "r+") as config:
+        with open(file_name, "r+",encoding='utf-8') as config:
             config.truncate()
             sleep(0.1)
             print("------开始执行show run命令-----")
@@ -164,9 +193,14 @@ class RuiJie_Device():
                     moreflag = re.search("--More--" , self.output)
                 print("------show run命令执行完成-----\n")
             except:
-               print('------！！！show run命令执行失败！！！-----\n')
+                print('------！！！show run命令执行失败！！！-----\n')
+                pass
 
     def get_hostname_by_telnet(self):
+        """
+        通过telnet方式获取设备名称
+        :return:
+        """
         sleep(0.5)
         output = self.session.read_very_eager().decode('gb18030','ignore').replace('\r', '').replace('<', '').replace('>', '').lstrip().rstrip()
         pattern = '.+'
