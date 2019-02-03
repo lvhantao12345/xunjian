@@ -1,0 +1,94 @@
+"""
+本模块的作用是通过读取外部的excel配置列表，来获取设备的IP地址、登录方式、登录端口、厂商、用户名、密码等信息
+"""
+import xlrd
+
+
+device_list = []
+
+
+def get_device_list():
+    """
+    根据配置文件excel的行数获取所有的设备信息，并形成列表
+    :return:
+    """
+    excel = xlrd.open_workbook('E:\phython\config_backup\device_list\device_list.xlsx')
+    table = excel.sheets()[0]
+    nrows = table.nrows
+    for index in range(nrows):
+        nrows = table.row_values(index)
+        device_list.append(nrows)
+    del device_list[0]
+    return device_list
+
+def get_ip_list():
+    """
+    获取所有设备的IP地址，并形成列表
+    :return:
+    """
+    ip_list = []
+    for index in device_list:
+        device_ip = index[0]
+        ip_list.append(device_ip)
+    return ip_list
+
+
+def get_vendor_list():
+    """
+    获取所有设备的厂商信息，并形成列表
+    :return:
+    """
+    vendor_list = []
+    for index in device_list:
+        device_vendor = index[1]
+        vendor_list.append(device_vendor)
+    return vendor_list
+
+def get_login_mode_list():
+    """
+    获取所有设备的登录模式信息，并形成列表
+    :return:
+    """
+    login_mode_list = []
+    for index in device_list:
+        device_login_mode = index[2]
+        login_mode_list.append(device_login_mode)
+    return login_mode_list
+
+def get_login_port_list():
+    """
+    获取所有设备的登录端口信息，并形成列表
+    :return:
+    """
+    login_port_list = []
+    for index in device_list:
+        login_port = index[3]
+        login_port_list.append(login_port)
+    return login_port_list
+
+def get_username_list():
+    """
+    获取所有设备的登录用户名，并形成列表
+    :return:
+    """
+    username_list = []
+    for index in device_list:
+        username = index[4]
+        username_list.append(username)
+    return username_list
+
+def get_password_list():
+    """
+    获取所有设备的登录密码，并形成列表
+    :return:
+    """
+    password_list = []
+    for index in device_list:
+        password = index[5]
+        password_list.append(password)
+    return password_list
+
+get_device_list()
+
+
+
