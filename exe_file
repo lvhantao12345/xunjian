@@ -3,39 +3,90 @@
 """
 import xunjian
 import device_list
+import threading
+from time import sleep
+
+total_device_number = len(device_list.get_vendor_list())
 
 
-def start_xunjian_progress():
+def start_xunjian_progress(index):
     """
     开始巡检任务
     :return:
     """
-    for index in range(len(device_list.get_vendor_list())):
-        if device_list.get_vendor_list()[index] == 'RuiJie':
-            device_index = xunjian.RuiJie_Device(str(device_list.get_ip_list()[index]),
-                                                 int(device_list.get_login_port_list()[index]),
-                                                 str(device_list.get_username_list()[index]),
-                                                 str(device_list.get_password_list()[index]))
-            if device_list.get_username_list():
+    success_number = 0
+    fail_number = 0
+    if device_list.get_vendor_list()[index] == 'RuiJie':
+        device_index = xunjian.RuiJie_Device(str(device_list.get_ip_list()[index]),
+                                             int(device_list.get_login_port_list()[index]),
+                                             str(device_list.get_username_list()[index]),
+                                             str(device_list.get_password_list()[index]))
+        if device_list.get_username_list():
+            try:
                 device_index.connect_device_by_telnet_with_username()
                 device_index.get_raw_config_by_telnet()
                 device_index.close_telnet_session()
-            else:
+                success_number = success_number + 1
+            except:
+                print('设备'+device_list.get_ip_list()[index]+'巡检失败！！\n')
+                fail_number = fail_number + 1
+        else:
+            try:
                 device_index.connect_device_by_telnet_without_username()
                 device_index.get_raw_config_by_telnet()
                 device_index.close_telnet_session()
-        elif device_list.get_vendor_list()[index] == 'H3C':
-            device_index = xunjian.H3C_Device(str(device_list.get_ip_list()[index]),
-                                              int(device_list.get_login_port_list()[index]),
-                                              str(device_list.get_username_list()[index]),
-                                              str(device_list.get_password_list()[index]))
-            if device_list.get_username_list()[index]:
-                device_index.connect_device_by_telnet_with_username()
-                device_index.get_raw_config_by_telnet()
-                device_index.close_telnet_session()
-            else:
-                device_index.connect_device_by_telnet_without_username()
-                device_index.get_raw_config_by_telnet()
-                device_index.close_telnet_session()
+                success_number = success_number + 1
+            except:
+                print('设备' + device_list.get_ip_list()[index] + '巡检失败！！\n')
+                fail_number = fail_number + 1
 
-start_xunjian_progress()
+    elif device_list.get_vendor_list()[index] == 'H3C':
+        device_index = xunjian.H3C_Device(str(device_list.get_ip_list()[index]),
+                                          int(device_list.get_login_port_list()[index]),
+                                          str(device_list.get_username_list()[index]),
+                                          str(device_list.get_password_list()[index]))
+        if device_list.get_username_list()[index]:
+            try:
+                device_index.connect_device_by_telnet_with_username()
+                device_index.get_raw_config_by_telnet()
+                device_index.close_telnet_session()
+                success_number = success_number + 1
+            except:
+                print('设备' + device_list.get_ip_list()[index] + '巡检失败！！\n')
+                fail_number = fail_number + 1
+        else:
+            try:
+                device_index.connect_device_by_telnet_without_username()
+                device_index.get_raw_config_by_telnet()
+                device_index.close_telnet_session()
+                success_number = success_number + 1
+            except:
+                print('设备' + device_list.get_ip_list()[index] + '巡检失败！！\n')
+                fail_number = fail_number + 1
+
+if __name__ == '__main__':
+    """
+    添加多线程功能，具体实现方式为：
+    1.创建一个包含所有任务线程的列表thrdlist。
+    2.将thrdlist细分成多个子列表，一个子列表代表一个批次的线程任务，每个子列表（每个批次的任务）包含
+      的线程个数，为用户输入的所需要同时启用的线程个数。
+    3.通过两个for循环开启thrdlist中的线程：
+        （1）外层for循环保证所有批次的线程任务全部按顺序线性开启；
+        （2）内层for循环保证每个批次的所有线程同时开启。
+    """
+    thread_number = int(input("请输入线程数\n"))
+    thrdlist = []
+    for index in range(total_device_number):
+        t = threading.Thread(target=start_xunjian_progress, args=(index,))
+        thrdlist.append(t)
+    #步骤1
+    c = [thrdlist[i:i+thread_number] for i in range(0, len(thrdlist), thread_number)]
+    #步骤2
+    for index in range(len(c)):
+        for t in range(len(c[index])):
+            c[index][t].start()
+            sleep(0.009)
+        for t in range(len(c[index])):
+            c[index][t].join()
+    #步骤3
+
